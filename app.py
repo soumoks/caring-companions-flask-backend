@@ -1,32 +1,59 @@
 from flask import Flask
-from student import Student
-from student import School
-from flask import jsonify
+from flask import jsonify,request
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+from pprint import pprint
 import json
 
+#Extending JSONencoder to support Object_ID returned by MongoDB
+#https://stackoverflow.com/questions/16586180/typeerror-objectid-is-not-json-serializable
+
+"""
+Referenced from
+https://medium.com/@riken.mehta/full-stack-tutorial-flask-react-docker-ee316a46e876
+"""
+class JSONEncoder(json.JSONEncoder):
+    ''' extend json-encoder class'''
+
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        if isinstance(o, datetime.datetime):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
 app = Flask(__name__)
-s1 = Student(1,"Sourabh")
-s2 = Student(2,"Vaibhav")
-sch1 = School([s1,s2])
-#data = json.dumps(sch1)
-data = sch1.get_json()
-student_list = [s1,s2]
-#student_list_json = json.dumps[ob.__dict__ for ob in self.students]
+app.json_encoder = JSONEncoder
 
 @app.route("/")
 def hello_world():
     return jsonify(s1.__dict__)
 
-@app.route("/vaibhav")
-def return_vaibhav():
-    return jsonify(s2.__dict__)
+"""
+Get all citizens present in the DB
+"""
+@app.route("/getcitizens")
+def get_citizens():
+    new_list = [post for post in posts.find()]
+    return jsonify(new_list)
 
-@app.route("/getstudents")
-def return_students():
-    #return jsonify(data)
-    #return jsonify(student_list_json)
-    return jsonify(sch1.get_json())
+"""
+Create citizens in the DB
+"""
+@app.route("/putcitizen",methods=['POST'])
+def create_citizen():
+    if request.method == 'POST':
+        data = request.get_json(force=True,cache=False)
+        pprint(data)
+        return jsonify({'ok': True, 'message': 'User created successfully!'}), 200
 
 
 
-app.run()
+if __name__ == "__main__":
+    client = MongoClient('localhost', 27017)
+    print("Connected to MongoDB..")
+    #Choose Database citizens
+    db = client.Citizens
+    #Choose collections posts
+    posts = db.posts
+    app.run(port=80)
