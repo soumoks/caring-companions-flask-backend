@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS,cross_origin
 from flask import jsonify,request
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -33,6 +34,7 @@ def hello_world():
 Get all citizens present in the DB
 """
 @app.route("/getcitizens")
+@cross_origin()
 def get_citizens():
     new_list = [post for post in posts.find()]
     return jsonify(new_list)
